@@ -1,11 +1,11 @@
 // 当前均为演示数据。接入接口时在这里统一替换，保持指标与图表口径一致。
 export const platformTitle = '老板驾驶舱'
 export const countyName = '某县'
-export type NavigationTab = 'overview' | 'monitor' | 'events' | 'disinfection' | 'statistics'
+export type NavigationTab = 'overview' | 'monitor' | 'events' | 'disinfection' | 'config' | 'statistics'
 export const navigation: { id: NavigationTab; label: string }[] = [
   { id: 'overview', label: '综合态势' }, { id: 'monitor', label: '电梯监控' },
   { id: 'events', label: '异常事件' }, { id: 'disinfection', label: '消杀管理' },
-  { id: 'statistics', label: '统计分析' }
+  { id: 'config', label: '消杀配置' }, { id: 'statistics', label: '统计分析' }
 ]
 export const overview = { communities: 36, elevators: 128, cameras: 128, online: 125 }
 export const onlineRate = Number((overview.online / overview.cameras * 100).toFixed(2))

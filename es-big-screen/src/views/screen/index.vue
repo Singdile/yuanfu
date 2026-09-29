@@ -1,12 +1,16 @@
 <template>
   <div class="platform-screen">
     <Header :active-tab="activeTab" @navigate="navigate" />
-    <main id="overview" class="overview-grid" aria-label="综合态势">
-      <OverviewMetrics />
-      <CountyMap />
-      <LiveEvents @select="showEvent" />
-    </main>
-    <Statistics ref="statisticsRef" />
+    <template v-if="activeTab === 'overview'">
+      <main id="overview" class="overview-grid" aria-label="综合态势">
+        <OverviewMetrics />
+        <CountyMap />
+        <LiveEvents @select="showEvent" />
+      </main>
+      <Statistics ref="statisticsRef" />
+    </template>
+    <DisinfectionPanel v-else-if="activeTab === 'disinfection'" class="disinfection-section" @configure="navigate('config')" />
+    <DisinfectionConfigForm v-else-if="activeTab === 'config'" class="disinfection-section" />
     <footer class="platform-footer"><span>电梯安全监测 · 县域综合态势</span><span>演示数据 / 未连接监控设备与业务接口</span></footer>
 
     <ElDialog v-model="dialogVisible" :title="dialogTitle" width="min(760px, 92vw)" class="platform-dialog" :close-on-click-modal="false" @closed="closeDialog">
@@ -15,20 +19,10 @@
         <dl class="detail-grid"><dt>事件编号</dt><dd>{{ selectedEvent.id }}</dd><dt>发生位置</dt><dd>{{ selectedEvent.location }}</dd><dt>触发时间</dt><dd>今日 {{ selectedEvent.time }}</dd></dl>
         <p class="dialog-note">演示事件，未接入真实视频与事件处置接口。</p>
       </template>
-      <template v-else-if="activeTab === 'monitor'">
-        <p class="dialog-intro">重点小区设备接入概况</p>
-        <div class="table-scroll"><table><thead><tr><th>小区</th><th>接入电梯</th><th>在线摄像头</th><th>设备状态</th></tr></thead><tbody><tr v-for="item in communities" :key="item.name"><td>{{ item.name }}</td><td>{{ item.elevators }} 部</td><td>{{ item.online }} / {{ item.elevators }}</td><td :class="{ 'warning-text': item.online < item.elevators }">{{ item.online < item.elevators ? '部分离线' : '全部在线' }}</td></tr></tbody></table></div>
-        <p class="dialog-note">演示设备信息；接入真实视频流后可扩展电梯实时画面。</p>
-      </template>
       <template v-else-if="activeTab === 'events'">
         <p class="dialog-intro">最近异常事件 · 点击记录查看详情</p>
         <div class="table-scroll"><table><thead><tr><th>异常类型</th><th>发生位置</th><th>时间</th><th>状态</th></tr></thead><tbody><tr v-for="item in recentEvents" :key="item.id"><td><button class="table-link" type="button" @click="selectedEvent = item">{{ item.type }}</button></td><td>{{ item.location }}</td><td>{{ item.time }}</td><td>{{ item.status }}</td></tr></tbody></table></div>
         <p class="dialog-note">演示记录；右侧实时异常面板支持按类型筛选。</p>
-      </template>
-      <template v-else-if="activeTab === 'disinfection'">
-        <p class="dialog-intro">今日消杀计划与执行记录</p>
-        <div class="table-scroll"><table><thead><tr><th>消杀位置</th><th>计划时间</th><th>执行人员</th><th>状态</th></tr></thead><tbody><tr v-for="item in disinfectionRecords" :key="item.location"><td>{{ item.location }}</td><td>{{ item.time }}</td><td>{{ item.operator }}</td><td :class="{ 'warning-text': item.status === '待执行' }">{{ item.status }}</td></tr></tbody></table></div>
-        <p class="dialog-note">演示记录，未连接消杀设备与工单系统。</p>
       </template>
     </ElDialog>
   </div>
@@ -42,7 +36,9 @@ import OverviewMetrics from './components/OverviewMetrics.vue'
 import CountyMap from './components/CountyMap.vue'
 import LiveEvents from './components/LiveEvents.vue'
 import Statistics from './components/Statistics.vue'
-import { communities, disinfectionRecords, navigation, recentEvents, type ElevatorEvent, type NavigationTab } from './data'
+import { communities, navigation, recentEvents, type ElevatorEvent, type NavigationTab } from './data'
+import DisinfectionPanel from './components/DisinfectionPanel.vue'
+import DisinfectionConfigForm from './components/DisinfectionConfigForm.vue'
 
 const activeTab = ref<NavigationTab>('overview')
 const dialogVisible = ref(false)
@@ -52,7 +48,7 @@ const dialogTitle = computed(() => selectedEvent.value ? '异常事件详情' : 
 function navigate(tab: NavigationTab) {
   activeTab.value = tab
   if (tab === 'statistics') statisticsRef.value?.focus()
-  else if (tab === 'overview') window.scrollTo({ top: 0, behavior: 'smooth' })
+  else if (tab === 'overview' || tab === 'disinfection' || tab === 'config') { dialogVisible.value = false; window.scrollTo({ top: 0, behavior: 'smooth' }) }
   else { selectedEvent.value = null; dialogVisible.value = true }
 }
 function showEvent(event: ElevatorEvent) {
@@ -76,6 +72,7 @@ function closeDialog() { selectedEvent.value = null; activeTab.value = 'overview
   color: #deebf6;
 }
 .overview-grid { display: grid; grid-template-columns: minmax(245px, 1fr) minmax(0, 2.8fr) minmax(290px, 1.15fr); gap: 14px; min-height: 0; }
+.disinfection-section { grid-row: 2 / 4; min-height: 0; }
 .platform-screen :deep(.panel) { min-width: 0; min-height: 0; padding: 16px 18px; background: #101f31; border: 1px solid #23394e; border-radius: 4px; }
 .platform-screen :deep(.panel-heading) { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px;
   h2 { position: relative; padding-left: 10px; font-size: 14px; font-weight: 500; letter-spacing: 1px; white-space: nowrap; &::before { position: absolute; content: ''; left: 0; top: 3px; bottom: 3px; width: 2px; background: #59cadd; } }
